@@ -144,7 +144,8 @@ def colon2lint(string):
   subs = string.split(':')
   ret = [ 0, 0, 1 ]
   for i in range(len(subs)):
-    ret[i] = int(subs[i])
+    if len(subs[i]) > 0:
+      ret[i] = int(subs[i])
   return ret
 
 if args.winargs is None:

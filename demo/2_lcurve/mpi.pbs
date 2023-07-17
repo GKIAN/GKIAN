@@ -1,0 +1,28 @@
+#!/bin/bash
+#PBS -N inv
+#PBS -q workq
+#PBS -l nodes=1:ppn=40
+#PBS -l walltime=12:00:00
+#PBS -o run.log
+#PBS -e err.log
+
+NPMPI=10
+
+cd $PBS_O_WORKDIR
+
+source /public/software/gcc-7.3/env.sh
+export PATH=/data/software/anaconda3/bin:$PATH
+export PATH=$PATH:/home/tche/.conda/envs/myenv/bin
+
+NP=$(wc -l < $PBS_NODEFILE)
+
+export OMP_NUM_THREADS=$(( ${NP} / ${NPMPI} ))
+
+mpirun -np ${NPMPI} ../../topy/callc.py -W 300.0 \
+  -t -O output/ -v -f ../data/f.txt -c ../data/c.txt \
+  -d ../data/361snSpec.txt -B 800 \
+  -0 ../data/init-361.dat \
+  -T GCCC -F 1.0 -r 0.0 0.00000 \
+  -l @-7:-2:20 \
+  -w 16:287:8,120:720:4 161:510:8,350:700:4
+

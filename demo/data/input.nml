@@ -1,0 +1,24 @@
+! NOTE
+!-------------------------------------------------------------------------------
+!   There are some basic parameters for the GRT kernel calculating program, and
+!   you can change any value or text behind the "=" or "!" character in any line
+!   of this file, but please DON'T change anything else.
+
+&para
+
+! frequency:
+fMin = 0.01d0
+fMax = 26.0d0
+fNum = 1000
+
+! phase velocity:
+cMin = 150.0d0
+cMax = 600.0d0
+cNum = 1126
+
+! the angular frequency adjustment factor ($ - \pi / wAdjust $):
+wAdjust = 3.0
+
+/ ! for para
+
+! vim:ft=fortran:tw=80:ts=4:sw=2:et:ai

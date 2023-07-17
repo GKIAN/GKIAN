@@ -184,8 +184,15 @@ else:
   ibnds = [ ( - args.maxupd / xwlev, args.maxupd / xwlev) for i in range(nlyr) ]
 
 lcrstr = args.lcrargs.split(':')
+dsctype = lcrstr[0][0]
 nlcra = int(lcrstr[2])
-lcra = np.logspace(float(lcrstr[0][1:]), float(lcrstr[1]), nlcra)
+if dsctype == '@':
+  lcra = np.logspace(float(lcrstr[0][1:]), float(lcrstr[1]), nlcra)
+elif dsctype == '#':
+  lcra = np.linspace(float(lcrstr[0][1:]), float(lcrstr[1]), nlcra)
+else:
+  raise ValueError('Not recongnized discretization type <%s> for L-curve.' %
+    dsctype)
 
 if (data.shape[0] != spec.paramod.fnum) \
   | (data.shape[1] != spec.paramod.cnum):

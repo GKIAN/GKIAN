@@ -6,7 +6,8 @@ build/*
 # Other
 test.pyf
 *.png
-demo/*.ker
+demo/*/*.ker
+demo/*/output/*
 
 #=== https://github.com/github/gitignore/blob/master/Fortran.gitignore =========
 # Prerequisites
