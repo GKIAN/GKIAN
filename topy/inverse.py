@@ -108,12 +108,14 @@ class Inversion:
       for i in range(what.shape[0]):
         wmin = np.amin(what[i, :])
         wmax = np.amax(what[i, :])
-        fctr[i, :] = wmax - wmin
+        wdif = wmax - wmin
+        fctr[i, :] = (1.0 if wdif == 0.0 else wdif)
         what[i, :] = (what[i, :] - wmin) / fctr[i, :]
     else:
       what[:, :] = np.where(what < 0.0, 0.0, what)
       for i in range(what.shape[0]):
-        fctr[i, :] = np.amax(np.abs(what[i, :]))
+        wmax = np.amax(np.abs(what[i, :]))
+        fctr[i, :] = (1.0 if wmax == 0.0 else wmax)
         what[i, :] /= fctr[i, :]
     return fctr
 

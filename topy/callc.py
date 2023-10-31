@@ -140,7 +140,8 @@ def colon2lint(string):
   subs = string.split(':')
   ret = [ 0, 0, 1 ]
   for i in range(len(subs)):
-    ret[i] = int(subs[i])
+    if len(subs[i]) > 0:
+      ret[i] = int(subs[i])
   return ret
 
 if args.winargs is None:
@@ -179,9 +180,11 @@ xwlev = np.amax(spec.paramod.beta)
 if args.maxupd is None:
   lbnd = spec.paramod.beta * ( 1.0 / 2.0 - 1.0 )
   ubnd = spec.paramod.alpha - spec.paramod.beta
-  ibnds = [ ( lbnd[i] / xwlev, ubnd[i] / xwlev ) for i in range(nlyr) ]
 else:
-  ibnds = [ ( - args.maxupd / xwlev, args.maxupd / xwlev) for i in range(nlyr) ]
+  lbnd = - args.maxupd * np.ones_like(spec.paramod.beta)
+  ubnd = args.maxupd * np.ones_like(spec.paramod.beta)
+lbnd = np.where(spec.paramod.beta + lbnd < 0.0, - 0.8 * spec.paramod.beta, lbnd)
+ibnds = [ ( lbnd[i] / xwlev, ubnd[i] / xwlev ) for i in range(nlyr) ]
 
 lcrstr = args.lcrargs.split(':')
 dsctype = lcrstr[0][0]
