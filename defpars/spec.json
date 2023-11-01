@@ -1,0 +1,30 @@
+{
+  "-d": "spec.dat",
+  "-0": "initial.dat",
+  "-I": "input.nml",
+  "-W": null,
+  "-1": null,
+  "-R": "output/",
+  "-2": "real.dat",
+  "-f": "f.txt",
+  "-c": "c.txt",
+  "-i": "0:0:1",
+  "-j": "0:0:1",
+  "-w": null,
+  "-r": 3,
+  "+f": "fplot.dat",
+  "+F": null,
+  "-x": null,
+  "-X": null,
+  "+b": null,
+  "+c": null,
+  "+p": null,
+  "-L": [
+    0.25,
+    0.75
+  ],
+  "-T": null,
+  "-s": "./",
+  "-O": "Ex4I_DataSpec",
+  "-p": 150
+}

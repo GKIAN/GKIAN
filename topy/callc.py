@@ -12,8 +12,8 @@ import numpy as np
 from mpi4py import MPI
 from math import ceil
 import scipy.optimize as sop
-import time, datetime, os
-import argparse
+import time, datetime, os, sys
+import argparse, json
 
 #===============================================================================
 
@@ -21,37 +21,45 @@ iopts = { 'iprint': -1,
           'gtol': 1.0e-18, 'ftol': 1.0e-24,
           'maxiter': 999, 'maxfun': 500 }
 
+dparfile = 'defpars/callc.json'
+if not os.path.isfile(dparfile):
+  pyhome = os.path.split(sys.argv[0])[0]
+  dparfile = pyhome + '/../defpars/callc.json'
+with open(dparfile) as fin:
+  dpars = json.load(fin)
+
 #===============================================================================
 
 ap = argparse.ArgumentParser(description = 'to inverse S-wave velocity ' +
   'parameters, with dispec.', prefix_chars = '-+')
 # for the input files
 ap.add_argument('-0', '--refmodel', metavar = 'referenceModel',
-  default = 'initial.dat', help = 'the reference model file. ' +
+  default = dpars['-0'], help = 'the reference model file. ' +
   '[default: %(default)s]')
-ap.add_argument('-d', '--datafile', metavar = 'dataFile', default = 'spec.dat',
+ap.add_argument('-d', '--datafile', metavar = 'dataFile', default = dpars['-d'],
   help = 'the data input file. [default: %(default)s]')
 ag = ap.add_mutually_exclusive_group()
-ag.add_argument('-I', '--inml', metavar = 'inputNMLFile', default = 'input.nml',
+ag.add_argument('-I', '--inml', metavar = 'inputNMLFile', default = dpars['-I'],
   help = 'the input NAMELIST file. [default: %(default)s]')
-ag.add_argument('-W', '--ifactor', metavar = 'imgFreqFactor', default = None,
-  type = float, help = 'the imaginary frequency factor. If not None, ' +
-  'read f/c sampling points from the respective input files.')
-ap.add_argument('-f', '--ffile', metavar = 'freqFile', default = 'f.txt',
+ag.add_argument('-W', '--ifactor', metavar = 'imgFreqFactor',
+  default = dpars['-W'], type = float, help = 'the imaginary frequency ' +
+  'factor. If not None, read f/c sampling points from the respective ' +
+  'input files. [default: %(default)s]')
+ap.add_argument('-f', '--ffile', metavar = 'freqFile', default = dpars['-f'],
   help = 'the frequency input file. [default: %(default)s]')
-ap.add_argument('-c', '--cfile', metavar = 'cFile', default = 'c.txt',
+ap.add_argument('-c', '--cfile', metavar = 'cFile', default = dpars['-c'],
   help = 'the phase velocity input file. [default: %(default)s]')
 # for the input interpreter
 ap.add_argument('-i', '--fidxargs', metavar = 'iStart[:iEnd[:iStride]]',
-  default = '0:0:1', help = 'the arguments for calculating the index of ' +
-  'frequency sampling-points in inversion.')
+  default = dpars['-i'], help = 'the arguments for calculating the index of ' +
+  'frequency sampling-points in inversion. [default: %(default)s]')
 ap.add_argument('-j', '--cidxargs', metavar = 'jStart[:jEnd[:jStride]]',
-  default = '0:0:1', help = 'the arguments for calculating the index of ' +
-  'phase velocity sampling-points in inversion.')
+  default = dpars['-j'], help = 'the arguments for calculating the index of ' +
+  'phase velocity sampling-points in inversion. [default: %(default)s]')
 ap.add_argument('-w', '--winargs', nargs = '+',
   metavar = 'iStart[:iEnd[:iStride]],jStart[:jEnd[:jStride]][,weight]',
-  default = None, help = 'the arguments for windowing spectrogram ' +
-  'in inversion.')
+  default = dpars['-w'], help = 'the arguments for windowing spectrogram ' +
+  'in inversion. [default: %(default)s]')
 ap.add_argument('-t', '--datatp', action = 'store_true',
   help = 'transpose the data matrix.')
 ap.add_argument('-n', '--nottn', action = 'store_true', help = 'use not ' +
@@ -60,31 +68,33 @@ ap.add_argument('-u', '--notsiu', action = 'store_true', help = 'use NOT ' +
   'SI Units in the initial model, but common units, such as km, km/s, g/cm^3.')
 # for the inversion controller
 ap.add_argument('-B', '--maxupd', metavar = 'maxUpdate', type = float,
-  default = None, help = 'the maximum permissive value for model updating; ' +
-  'if None, vs will result from [vs/2, vp].')
-ap.add_argument('-E', '--emptype', metavar = 'typeEmpirical', default = 'B',
-  help = "the type of empirical relation. B: Brocher's fit, U: User's local " +
-  'fit, N: No empirical relation. [default: %(default)s]')
-ap.add_argument('-T', '--mistype', metavar = 'typeMisfit', default = 'GCCC',
-  help = 'the type of misfit measurement. [default: %(default)s; ' +
-  'acceptable: SD2N, GCCC]')
+  default = dpars['-B'], help = 'the maximum permissive value for model ' +
+  'updating; if None, vs will result from [vs/2, vp]. [default: %(default)s]')
+ap.add_argument('-E', '--emptype', metavar = 'typeEmpirical',
+  default = dpars['-E'], help = 'the type of empirical relation. ' +
+  "B: Brocher's fit, U: User's local fit, N: No empirical relation. " +
+  '[default: %(default)s]')
+ap.add_argument('-T', '--mistype', metavar = 'typeMisfit',
+  default = dpars['-T'], help = 'the type of misfit measurement. ' +
+  '[acceptable: SD2N, GCCC; default: %(default)s]')
 ap.add_argument('-F', '--fwgtarg', metavar = 'fWeightArg', type = float,
-  default = None, help = 'the argument for weighting the misfit for ' +
+  default = dpars['-F'], help = 'the argument for weighting the misfit for ' +
   'different frequencies, only available for SD2N and GCCC. ' +
   '[default: %(default)s]')
 ap.add_argument('-r', '--regargs', nargs = 2, metavar = 'regArg', type = float,
-  default = [0.0e-9, 0.0e-6], help = 'two regularization arguments for ' +
-  '(d2init, smooth). [default: 0.0 0.0]')
+  default = dpars['-r'], help = 'two regularization arguments for ' +
+  '(d2init, smooth). [default: %g %g]' % (dpars['-r'][0], dpars['-r'][1]))
 ap.add_argument('-l', '--lcrargs', metavar = '@e_start:e_end:num',
-  default = '@-7:0:0', help = 'the three L-curve arguments for the ' +
+  default = dpars['-l'], help = 'the three L-curve arguments for the ' +
   'regularization factor of (d2init or smooth). [default: %(default)s]')
-ap.add_argument('-L', '--lcrtype', metavar = 'typeRegLcurve', default = 'S',
-  help = 'the regularization type for L-curve. [default: %(default)s; ' +
-  'acceptable: I, S]')
+ap.add_argument('-L', '--lcrtype', metavar = 'typeRegLcurve',
+  default = dpars['-L'], help = 'the regularization type for L-curve. ' +
+  '[acceptable: I, S; default: %(default)s]')
 # for the output controller
-ap.add_argument('-O', '--outpath', metavar = 'outputPath', default = './',
-  help = 'save the inversed result(s) to the path. [default: %(default)s]')
-ap.add_argument('-v', '--verbosity', action = 'count', default = 0,
+ap.add_argument('-O', '--outpath', metavar = 'outputPath',
+  default = dpars['-O'], help = 'save the inversed result(s) to the path. ' +
+  '[default: %(default)s]')
+ap.add_argument('-v', '--verbosity', action = 'count', default = dpars['-v'],
   help = 'increase output verbosity.')
 args = ap.parse_args()
 

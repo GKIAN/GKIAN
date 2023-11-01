@@ -8,55 +8,69 @@
 from disba import PhaseDispersion
 import numpy as np
 import matplotlib.pyplot as plt
-import argparse, glob, os
+import argparse, json
+import glob, os, sys
+
+dparfile = 'defpars/curve.json'
+if not os.path.isfile(dparfile):
+  pyhome = os.path.split(sys.argv[0])[0]
+  dparfile = pyhome + '/../defpars/curve.json'
+with open(dparfile) as fin:
+  dpars = json.load(fin)
+
+#===============================================================================
 
 ap = argparse.ArgumentParser(description = 'to plot data or curve.',
   prefix_chars ='-+')
-ap.add_argument('-d', '--fdata', metavar = 'dataFile', default = None,
-  help = 'the data file.')
-ap.add_argument('-0', '--initial', metavar = 'initModel', default = None,
-  help = 'the initial model.')
+ap.add_argument('-d', '--fdata', metavar = 'dataFile', default = dpars['-d'],
+  help = 'the data file. [default: %(default)s]')
+ap.add_argument('-0', '--initial', metavar = 'initModel', default = dpars['-0'],
+  help = 'the initial model. [default: %(default)s]')
 ag = ap.add_mutually_exclusive_group()
-ag.add_argument('-1', '--inv', metavar = 'invdModel', default = None,
-  help = 'to plot the inversed model.')
-ag.add_argument('-A', '--aiofile', metavar = 'allInOneFile', default = None,
-  help = 'to plot some inversed models for different threads.')
-ap.add_argument('-2', '--real', metavar = 'realModel', default = None,
-  help = 'to plot the real model.')
-ap.add_argument('-a', '--avrg', metavar = 'avrgModel', default = None,
-  help = 'to plot the averaged model.')
-ap.add_argument('-R', '--outdir', metavar = 'outputDir', default = 'output/',
+ag.add_argument('-1', '--inv', metavar = 'invdModel', default = dpars['-1'],
+  help = 'to plot the inversed model. [default: %(default)s]')
+ag.add_argument('-A', '--aiofile', metavar = 'allInOneFile',
+  default = dpars['-A'], help = 'to plot some inversed models for different ' +
+  'threads. [default: %(default)s]')
+ap.add_argument('-2', '--real', metavar = 'realModel', default = dpars['-2'],
+  help = 'to plot the real model. [default: %(default)s]')
+ap.add_argument('-a', '--avrg', metavar = 'avrgModel', default = dpars['-a'],
+  help = 'to plot the averaged model. [default: %(default)s]')
+ap.add_argument('-R', '--outdir', metavar = 'outputDir', default = dpars['-R'],
   help = 'the inversion-output directory. [default: %(default)s]')
-ap.add_argument('-f', '--ffile', metavar = 'freqFile', default = None,
-  help = 'the frequency input file.')
+ap.add_argument('-f', '--ffile', metavar = 'freqFile', default = dpars['-f'],
+  help = 'the frequency input file. [default: %(default)s]')
 ap.add_argument('-c', '--clim', metavar = 'cLim', type = float, nargs = 2,
-  default = None, help = 'set the phase-velocity limits.')
+  default = dpars['-c'], help = 'set the phase-velocity limits. ' +
+  '[default: %(default)s]')
 ap.add_argument('-m', '--nmode', metavar = 'modeNum', type = int,
-  default = None, help = 'the number of mode to search. If has fdata, ' +
-  'take the maximum value of modes in fdata.')
+  default = dpars['-m'], help = 'the number of mode to search. If has fdata, ' +
+  'take the maximum value of modes in fdata. [default: %(default)s]')
 ap.add_argument('-P', '--percplot', metavar = 'percentPlot', type = float,
-  default = 100, help = 'use the best percentage of all models to plot for ' +
-  'allinone. [default: %(default)s]')
+  default = dpars['-P'], help = 'use the best percentage of all models to ' +
+  'plot for allinone. [default: %(default)s]')
 ap.add_argument('-i', '--fidxargs', metavar = 'iStart[:iEnd[:iStride]]',
-  default = '0:0:1', help = 'the arguments for calculating the index of ' +
-  'frequency sampling-points in inversion.')
+  default = dpars['-i'], help = 'the arguments for calculating the index of ' +
+  'frequency sampling-points in inversion. [default: %(default)s]')
 ap.add_argument('-l', '--pline', action = 'store_true',
   help = 'use connected-line, NOT scattered-markers to plot.')
 ap.add_argument('-u', '--notsiu', action = 'store_true',
   help = 'NOT SI Units used in forward modelling, but common units, such as ' +
   'km, km/s, g/cm^3.')
-ap.add_argument('-T', '--ptitle', metavar = 'plotTitle', default = None,
-  help = 'set the title for plotting.')
+ap.add_argument('-T', '--ptitle', metavar = 'plotTitle', default = dpars['-T'],
+  help = 'set the title for plotting. [default: %(default)s]')
 ag = ap.add_mutually_exclusive_group()
-ag.add_argument('-s', '--savepath', metavar = 'saveFigPath', default = './',
-  help = 'save figure(s) to the path. [default: %(default)s]')
+ag.add_argument('-s', '--savepath', metavar = 'saveFigPath',
+  default = dpars['-s'], help = 'save figure(s) to the path. ' +
+  '[default: %(default)s]')
 ag.add_argument('-S', '--show', action = 'store_true',
   help = 'show figure(s) immediately.')
 ap.add_argument('-O', '--outpref', metavar = 'outFigPrefix',
-  default = 'Ex4I_DataCurve', help = 'save figure as a file with ' +
+  default = dpars['-O'], help = 'save figure as a file with ' +
   'the name prefix. [default: %(default)s]')
-ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int, default = 150,
-  help = 'specify the value of dpi for saving figure. [default: %(default)s]')
+ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int,
+  default = dpars['-p'], help = 'specify the value of dpi for saving figure. ' +
+  '[default: %(default)s]')
 ap.add_argument('-k', '--kmunit', action = 'store_true',
   help = 'use km as the length unit.')
 ap.add_argument('-e', '--epsfmt', action = 'store_true',

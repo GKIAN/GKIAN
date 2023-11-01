@@ -7,43 +7,55 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import argparse, glob
+import argparse, json
+import glob, os, sys
+
+dparfile = 'defpars/model.json'
+if not os.path.isfile(dparfile):
+  pyhome = os.path.split(sys.argv[0])[0]
+  dparfile = pyhome + '/../defpars/model.json'
+with open(dparfile) as fin:
+  dpars = json.load(fin)
+
+#===============================================================================
 
 ap = argparse.ArgumentParser(description = 'to plot model.')
 ap.add_argument('initial', nargs = '?', metavar = 'initModel',
-  default = 'initial.dat', help = 'the initial model. [default: %(default)s]')
+  default = dpars['PA'], help = 'the initial model. [default: %(default)s]')
 ag = ap.add_mutually_exclusive_group()
-ag.add_argument('-1', '--inv', metavar = 'invdModel', default = None,
-  help = 'to plot the inversed model.')
-ag.add_argument('-R', '--outdir', metavar = 'outputDir', default = None,
+ag.add_argument('-1', '--inv', metavar = 'invdModel', default = dpars['-1'],
+  help = 'to plot the inversed model. [default: %(default)s]')
+ag.add_argument('-R', '--outdir', metavar = 'outputDir', default = dpars['-R'],
   help = 'to plot all models under the inversion-output directory, ' +
-  'recursively.')
-ap.add_argument('-2', '--real', metavar = 'realModel', default = None,
-  help = 'to plot the real model.')
+  'recursively. [default: %(default)s]')
+ap.add_argument('-2', '--real', metavar = 'realModel', default = dpars['-2'],
+  help = 'to plot the real model. [default: %(default)s]')
 ag = ap.add_mutually_exclusive_group()
 ag.add_argument('-x', '--idxlist', metavar = 'index', type = int, nargs = '+',
-  default = None, help = 'the index list for the inversed models ' +
-  'to be plotted.')
+  default = dpars['-x'], help = 'the index list for the inversed models ' +
+  'to be plotted. [default: %(default)s]')
 ag.add_argument('-X', '--idxarg', metavar = 'iStart:iEnd:iStride',
-  default = None, help = 'the arguments for calculating indexes of ' +
-  'the inversed models to be plotted.')
+  default = dpars['-X'], help = 'the arguments for calculating indexes of ' +
+  'the inversed models to be plotted. [default: %(default)s]')
 ap.add_argument('-b', '--hwinit', metavar = 'halfWidthInit', type = float,
-  default = None, help = "the half width of initial models' range, use m/s " +
-  'as unit.')
+  default = dpars['-b'], help = "the half width of initial models' range, " +
+  'use m/s as unit. [default: %(default)s]')
 ap.add_argument('-v', '--vlim', metavar = 'vLim', type = float, nargs = 2,
-  default = None, help = 'set the velocity limits.')
-ap.add_argument('-T', '--ptitle', metavar = 'plotTitle', default = None,
-  help = 'set the title for plotting.')
+  default = dpars['-v'], help = 'set the velocity limits.')
+ap.add_argument('-T', '--ptitle', metavar = 'plotTitle', default = dpars['-T'],
+  help = 'set the title for plotting. [default: %(default)s]')
 ag = ap.add_mutually_exclusive_group()
-ag.add_argument('-s', '--savepath', metavar = 'saveFigPath', default = './',
-  help = 'save figure(s) to the path. [default: %(default)s]')
+ag.add_argument('-s', '--savepath', metavar = 'saveFigPath',
+  default = dpars['-s'], help = 'save figure(s) to the path. ' +
+  '[default: %(default)s]')
 ag.add_argument('-S', '--show', action = 'store_true',
   help = 'show figure(s) immediately.')
 ap.add_argument('-O', '--outpref', metavar = 'outFigPrefix',
-  default = 'Ex4I_Model', help = 'save figure as a file with ' +
+  default = dpars['-O'], help = 'save figure as a file with ' +
   'the name prefix. [default: %(default)s]')
-ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int, default = 150,
-  help = 'specify the value of dpi for saving figure. [default: %(default)s]')
+ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int,
+  default = dpars['-p'], help = 'specify the value of dpi for saving figure. ' +
+  '[default: %(default)s]')
 ap.add_argument('-k', '--kmunit', action = 'store_true',
   help = 'use km as the length unit.')
 ap.add_argument('-e', '--epsfmt', action = 'store_true',

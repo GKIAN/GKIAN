@@ -1,0 +1,14 @@
+{
+  "PA": "output/allione.txt",
+  "-0": "initial.dat",
+  "-2": null,
+  "-E": "B",
+  "-v": null,
+  "-P": 50,
+  "-a": null,
+  "-b": null,
+  "-V": null,
+  "-s": "./",
+  "-O": "Ex4I_Result",
+  "-p": 150
+}

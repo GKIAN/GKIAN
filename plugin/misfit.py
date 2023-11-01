@@ -10,64 +10,79 @@ import numpy as np
 import h5py
 import matplotlib.pyplot as plt
 import matplotlib.ticker as tkr
-import argparse, glob
+import argparse, json
+import glob, os, sys
+
+dparfile = 'defpars/misfit.json'
+if not os.path.isfile(dparfile):
+  pyhome = os.path.split(sys.argv[0])[0]
+  dparfile = pyhome + '/../defpars/misfit.json'
+with open(dparfile) as fin:
+  dpars = json.load(fin)
+
+#===============================================================================
 
 ap = argparse.ArgumentParser(description = 'to plot misfit.')
 # for 'readfile' group
 ag1 = ap.add_argument_group('readfile', 'read from a misfit file to plot.')
-ag1.add_argument('-m', '--misfile', metavar = 'misfitFile', default = None,
-  help = 'read from the misfit file; otherwise, ' +
-  're-calculate misfit for all models.')
+ag1.add_argument('-m', '--misfile', metavar = 'misfitFile',
+  default = dpars['-m'], help = 'read from the misfit file; otherwise, ' +
+  're-calculate misfit for all models. [default: %(default)s]')
 # for 'evaluate' group
 ag2 = ap.add_argument_group('evaluate', 'evaluate from the inversed results ' +
   'to plot.')
 ag2.add_argument('fdata', nargs = '?', metavar = 'dataFile',
-  default = 'spec.dat', help = 'the data file. [default: %(default)s]')
+  default = dpars['EP'], help = 'the data file. [default: %(default)s]')
 ag2.add_argument('-0', '--initial', metavar = 'initModel',
-  default = 'initial.dat', help = 'the initial model. [default: %(default)s]')
+  default = dpars['-0'], help = 'the initial model. [default: %(default)s]')
 aeg = ag2.add_mutually_exclusive_group()
-aeg.add_argument('-I', '--inml', metavar = 'inputNMLFile', default = 'input.nml',
-  help = 'the input NAMELIST file. [default: %(default)s]')
-aeg.add_argument('-W', '--ifactor', metavar = 'imgFreqFactor', default = None,
-  type = float, help = 'the imaginary frequency factor. If not None, ' +
-  'read f/c sampling points from the respective input files.')
-ag2.add_argument('-f', '--ffile', metavar = 'freqFile', default = 'f.txt',
+aeg.add_argument('-I', '--inml', metavar = 'inputNMLFile',
+  default = dpars['-I'], help = 'the input NAMELIST file. ' +
+  '[default: %(default)s]')
+aeg.add_argument('-W', '--ifactor', metavar = 'imgFreqFactor',
+  default = dpars['-W'], type = float, help = 'the imaginary frequency ' +
+  'factor. If not None, read f/c sampling points from the respective ' +
+  'input files. [default: %(default)s]')
+ag2.add_argument('-f', '--ffile', metavar = 'freqFile', default = dpars['-f'],
   help = 'the frequency input file. [default: %(default)s]')
-ag2.add_argument('-c', '--cfile', metavar = 'cFile', default = 'c.txt',
+ag2.add_argument('-c', '--cfile', metavar = 'cFile', default = dpars['-c'],
   help = 'the phase velocity input file. [default: %(default)s]')
-ag2.add_argument('-R', '--outdir', metavar = 'outputDir', default = 'output/',
+ag2.add_argument('-R', '--outdir', metavar = 'outputDir', default = dpars['-R'],
   help = 'to plot all models under the inversion-output directory, ' +
   'recursively. [default: %(default)s]')
 ag2.add_argument('-i', '--fidxargs', metavar = 'iStart[:iEnd[:iStride]]',
-  default = '0:0:1', help = 'the arguments for calculating the index of ' +
-  'frequency sampling-points in inversion.')
+  default = dpars['-i'], help = 'the arguments for calculating the index of ' +
+  'frequency sampling-points in inversion. [default: %(default)s]')
 ag2.add_argument('-j', '--cidxargs', metavar = 'iStart[:iEnd[:iStride]]',
-  default = '0:0:1', help = 'the arguments for calculating the index of ' +
-  'phase velocity sampling-points in inversion.')
+  default = dpars['-j'], help = 'the arguments for calculating the index of ' +
+  'phase velocity sampling-points in inversion. [default: %(default)s]')
 ag2.add_argument('-w', '--winargs', nargs = '+',
   metavar = 'iStart[:iEnd[:iStride]],jStart[:jEnd[:jStride]][,weight]',
-  default = None, help = 'the arguments for windowing spectrogram ' +
-  'in inversion.')
+  default = dpars['-w'], help = 'the arguments for windowing spectrogram ' +
+  'in inversion. [default: %(default)s]')
 ag2.add_argument('-t', '--datatp', action = 'store_true',
   help = 'transpose the data matrix.')
 ag2.add_argument('-u', '--notsiu', action = 'store_true',
   help = 'NOT SI Units used in the initial model, but common units, such as ' +
   'km, km/s, g/cm^3.')
-ag2.add_argument('-M', '--Misfile', metavar = 'misfitFile', default = None,
-  help = 'save evaluated misfit result to the file; otherwise, not save.')
+ag2.add_argument('-M', '--Misfile', metavar = 'misfitFile',
+  default = dpars['-M'], help = 'save evaluated misfit result to the file; ' +
+  'otherwise, not save. [default: %(default)s]')
 # for plotting
 ap.add_argument('-l', '--logy', action = 'store_true',
   help = "plot with 'semilogy'; otherwise, with 'plot'.")
 aeg = ap.add_mutually_exclusive_group()
-aeg.add_argument('-s', '--savepath', metavar = 'saveFigPath', default = './',
-  help = 'save figure(s) to the path. [default: %(default)s]')
+aeg.add_argument('-s', '--savepath', metavar = 'saveFigPath',
+  default = dpars['-s'], help = 'save figure(s) to the path. ' +
+  '[default: %(default)s]')
 aeg.add_argument('-S', '--show', action = 'store_true',
   help = 'show figure(s) immediately.')
 ap.add_argument('-O', '--outpref', metavar = 'outFigPrefix',
-  default = 'Ex4I_Misfit', help = 'save figure as a file with ' +
+  default = dpars['-O'], help = 'save figure as a file with ' +
   'the name prefix. [default: %(default)s]')
-ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int, default = 150,
-  help = 'specify the value of dpi for saving figure. [default: %(default)s]')
+ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int,
+  default = dpars['-p'], help = 'specify the value of dpi for saving figure. ' +
+  '[default: %(default)s]')
 ap.add_argument('-e', '--epsfmt', action = 'store_true',
   help = 'save figure(s) with EPS format; otherwise, with PNG format.')
 args = ap.parse_args()

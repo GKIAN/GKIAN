@@ -1,0 +1,16 @@
+{
+  "+k": null,
+  "EP": "model.dat",
+  "-I": "input.nml",
+  "-W": null,
+  "-f": "f.txt",
+  "-c": "c.txt",
+  "-i": "0:0:1",
+  "-j": "0:0:1",
+  "-w": null,
+  "+K": null,
+  "-E": null,
+  "-s": "./",
+  "-O": "Ex4I_Kernel",
+  "-p": 150
+}

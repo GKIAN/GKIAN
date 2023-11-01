@@ -8,59 +8,75 @@
 import dispec as spec
 import numpy as np
 import matplotlib.pyplot as plt
-import argparse
+import argparse, json
+import os, sys
+
+dparfile = 'defpars/senker.json'
+if not os.path.isfile(dparfile):
+  pyhome = os.path.split(sys.argv[0])[0]
+  dparfile = pyhome + '/../defpars/senker.json'
+with open(dparfile) as fin:
+  dpars = json.load(fin)
+
+#===============================================================================
 
 ap = argparse.ArgumentParser(description = 'to calculate and plot spectrum ' +
   'sensitivity of an input model.', prefix_chars = '-+')
 # for 'readfile' group
 ag1 = ap.add_argument_group('readfile', 'read from a sen-ker file to plot.')
-ag1.add_argument('+k', '--kerfile', metavar = 'senKernelFile', default = None,
-  help = 'read from the sen-ker file; otherwise, ' +
-  're-calculate spectrum sensitivity for an input model.')
+ag1.add_argument('+k', '--kerfile', metavar = 'senKernelFile',
+  default = dpars['+k'], help = 'read from the sen-ker file; otherwise, ' +
+  're-calculate spectrum sensitivity for an input model. ' +
+  '[default: %(default)s]')
 # for 'evaluate' group
 ag2 = ap.add_argument_group('evaluate', 'evaluate for the input model to plot.')
 ag2.add_argument('modfile', metavar = 'inputModelFile', nargs = '?',
-  default = 'model.dat', help = 'the input model file. [default: %(default)s]')
+  default = dpars['EP'], help = 'the input model file. [default: %(default)s]')
 aeg = ag2.add_mutually_exclusive_group()
-aeg.add_argument('-I', '--inml', metavar = 'inputNMLFile', default = 'input.nml',
-  help = 'the input NAMELIST file. [default: %(default)s]')
-aeg.add_argument('-W', '--ifactor', metavar = 'imgFreqFactor', default = None,
-  type = float, help = 'the imaginary frequency factor. If not None, ' +
-  'read f/c sampling points from the respective input files.')
-ag2.add_argument('-f', '--ffile', metavar = 'freqFile', default = 'f.txt',
+aeg.add_argument('-I', '--inml', metavar = 'inputNMLFile',
+  default = dpars['-I'], help = 'the input NAMELIST file. ' +
+  '[default: %(default)s]')
+aeg.add_argument('-W', '--ifactor', metavar = 'imgFreqFactor',
+  default = dpars['-W'], type = float, help = 'the imaginary frequency ' +
+  'factor. If not None, read f/c sampling points from the respective ' +
+  'input files. [default: %(default)s]')
+ag2.add_argument('-f', '--ffile', metavar = 'freqFile', default = dpars['-f'],
   help = 'the frequency input file. [default: %(default)s]')
-ag2.add_argument('-c', '--cfile', metavar = 'cFile', default = 'c.txt',
+ag2.add_argument('-c', '--cfile', metavar = 'cFile', default = dpars['-c'],
   help = 'the phase velocity input file. [default: %(default)s]')
 ag2.add_argument('-i', '--fidxargs', metavar = 'iStart[:iEnd[:iStride]]',
-  default = '0:0:1', help = 'the arguments for calculating the index of ' +
-  'frequency sampling-points in inversion.')
+  default = dpars['-i'], help = 'the arguments for calculating the index of ' +
+  'frequency sampling-points in inversion. [default: %(default)s]')
 ag2.add_argument('-j', '--cidxargs', metavar = 'iStart[:iEnd[:iStride]]',
-  default = '0:0:1', help = 'the arguments for calculating the index of ' +
-  'phase velocity sampling-points in inversion.')
-ag2.add_argument('-w', '--winargs', default = None,
+  default = dpars['-j'], help = 'the arguments for calculating the index of ' +
+  'phase velocity sampling-points in inversion. [default: %(default)s]')
+ag2.add_argument('-w', '--winargs', default = dpars['-w'],
   metavar = 'iStart[:iEnd[:iStride]],jStart[:jEnd[:jStride]]',
-  help = 'the arguments for windowing spectrogram in inversion.')
+  help = 'the arguments for windowing spectrogram in inversion. ' +
+  '[default: %(default)s]')
 ag2.add_argument('-u', '--notsiu', action = 'store_true',
   help = 'NOT SI Units used in the initial model, but common units, such as ' +
   'km, km/s, g/cm^3.')
-ag2.add_argument('+K', '--Kerfile', metavar = 'senKernelFile', default = None,
-  help = 'save evaluated spectrum sensitivity result to the file; otherwise, ' +
-  'not save.')
+ag2.add_argument('+K', '--Kerfile', metavar = 'senKernelFile',
+  default = dpars['+K'], help = 'save evaluated spectrum sensitivity result ' +
+  'to the file; otherwise, not save. [default: %(default)s]')
 # for extracting
-ap.add_argument('-E', '--extkey', metavar = 'key=Value', default = None,
+ap.add_argument('-E', '--extkey', metavar = 'key=Value', default = dpars['-E'],
   help = 'the profile parameters for spectrum sensitivity. Acceptable key: ' +
-  'f, c and z.')
+  'f, c and z. [default: %(default)s]')
 # for plotting
 ag = ap.add_mutually_exclusive_group()
-ag.add_argument('-s', '--savepath', metavar = 'saveFigPath', default = './',
-  help = 'save figure(s) to the path. [default: %(default)s]')
+ag.add_argument('-s', '--savepath', metavar = 'saveFigPath',
+  default = dpars['-s'], help = 'save figure(s) to the path. ' +
+  '[default: %(default)s]')
 ag.add_argument('-S', '--show', action = 'store_true',
   help = 'show figure(s) immediately.')
 ap.add_argument('-O', '--outpref', metavar = 'outFigPrefix',
-  default = 'Ex4I_Result', help = 'save figure as a file with ' +
+  default = dpars['-O'], help = 'save figure as a file with ' +
   'the name prefix. [default: %(default)s]')
-ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int, default = 150,
-  help = 'specify the value of dpi for saving figure. [default: %(default)s]')
+ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int,
+  default = dpars['-p'], help = 'specify the value of dpi for saving figure. ' +
+  '[default: %(default)s]')
 ap.add_argument('-k', '--kmunit', action = 'store_true',
   help = 'use km as the length unit.')
 ap.add_argument('-e', '--epsfmt', action = 'store_true',

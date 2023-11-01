@@ -1,0 +1,17 @@
+{
+  "-m": null,
+  "EP": "spec.dat",
+  "-0": "initial.dat",
+  "-I": "input.nml",
+  "-W": null,
+  "-f": "f.txt",
+  "-c": "c.txt",
+  "-R": "output/",
+  "-i": "0:0:1",
+  "-j": "0:0:1",
+  "-w": null,
+  "-M": null,
+  "-s": "./",
+  "-O": "Ex4I_Misfit",
+  "-p": 150
+}

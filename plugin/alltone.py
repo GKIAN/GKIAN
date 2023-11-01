@@ -9,44 +9,59 @@ import empirical as emp
 import numpy as np
 import scipy.stats as sst
 import matplotlib.pyplot as plt
-import argparse
+import argparse, json
+import os, sys
+
+dparfile = 'defpars/alltone.json'
+if not os.path.isfile(dparfile):
+  pyhome = os.path.split(sys.argv[0])[0]
+  dparfile = pyhome + '/../defpars/alltone.json'
+with open(dparfile) as fin:
+  dpars = json.load(fin)
+
+#===============================================================================
 
 ap = argparse.ArgumentParser(description = 'to calculate and plot ' +
   'from all to one.')
 ap.add_argument('aiofile', metavar = 'allInOneFile', nargs = '?',
-  default = 'output/allinone.txt', help = 'the AllInOne file. ' +
-  '[default: %(default)s]')
+  default = dpars['PA'], help = 'the AllInOne file. [default: %(default)s]')
 ap.add_argument('-0', '--initial', metavar = 'initModel',
-  default = 'initial.dat', help = 'the initial model. [default: %(default)s]')
-ap.add_argument('-2', '--real', metavar = 'realModel', default = None,
-  help = 'to plot the real model.')
-ap.add_argument('-E', '--emptype', metavar = 'typeEmpirical', default = 'B',
-  help = "the type of empirical relation. B: Brocher's fit, U: User's local " +
-  'fit, N: No empirical relation. [default: %(default)s]')
-ap.add_argument('-v', '--vlim', metavar = 'vLim', nargs = 2, type = float,
-  default = None, help = 'the velocity limits (vmin, vmax).')
-ap.add_argument('-P', '--percplot', metavar = 'percentPlot', type = float,
-  default = 50, help = 'use the best percentage of all models to plot. ' +
+  default = dpars['-0'], help = 'the initial model. [default: %(default)s]')
+ap.add_argument('-2', '--real', metavar = 'realModel', default = dpars['-2'],
+  help = 'to plot the real model. [default: %(default)s]')
+ap.add_argument('-E', '--emptype', metavar = 'typeEmpirical',
+  default = dpars['-E'], help = 'the type of empirical relation. ' +
+  "B: Brocher's fit, U: User's local fit, N: No empirical relation. " +
   '[default: %(default)s]')
-ap.add_argument('-a', '--avrgfile', metavar = 'averageFile', default = None,
-  help = 'the output filename of average model; if None, not output.')
+ap.add_argument('-v', '--vlim', metavar = 'vLim', nargs = 2, type = float,
+  default = dpars['-v'], help = 'the velocity limits (vmin, vmax). ' +
+  '[default: %(default)s]')
+ap.add_argument('-P', '--percplot', metavar = 'percentPlot', type = float,
+  default = dpars['-P'], help = 'use the best percentage of all models ' +
+  'to plot. [default: %(default)s]')
+ap.add_argument('-a', '--avrgfile', metavar = 'averageFile',
+  default = dpars['-a'], help = 'the output filename of average model; ' +
+  'if None, not output. [default: %(default)s]')
 ap.add_argument('-b', '--hwinit', metavar = 'halfWidthInit', type = float,
-  default = None, help = "the half width of initial models' range, use m/s " +
-  'as unit.')
+  default = dpars['-b'], help = "the half width of initial models' range, " +
+  'use m/s as unit. [default: %(default)s]')
 ap.add_argument('-K', '--usekde', action = 'store_true',
   help = 'use KDE statistical analysis.')
 ap.add_argument('-V', '--vmaxkde', metavar = 'vMaxKDE', type = float,
-  default = None, help = 'the vmax value of pcolor for KDE.')
+  default = dpars['-V'], help = 'the vmax value of pcolor for KDE. ' +
+  '[default: %(default)s]')
 ag = ap.add_mutually_exclusive_group()
-ag.add_argument('-s', '--savepath', metavar = 'saveFigPath', default = './',
-  help = 'save figure(s) to the path. [default: %(default)s]')
+ag.add_argument('-s', '--savepath', metavar = 'saveFigPath',
+  default = dpars['-s'], help = 'save figure(s) to the path. ' +
+  '[default: %(default)s]')
 ag.add_argument('-S', '--show', action = 'store_true',
   help = 'show figure(s) immediately.')
 ap.add_argument('-O', '--outpref', metavar = 'outFigPrefix',
-  default = 'Ex4I_Result', help = 'save figure as a file with ' +
-  'the name prefix. [default: %(default)s]')
-ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int, default = 150,
-  help = 'specify the value of dpi for saving figure. [default: %(default)s]')
+  default = dpars['-O'], help = 'save figure as a file with the name prefix. ' +
+  '[default: %(default)s]')
+ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int,
+  default = dpars['-p'], help = 'specify the value of dpi for saving figure. ' +
+  '[default: %(default)s]')
 ap.add_argument('-k', '--kmunit', action = 'store_true',
   help = 'use km as the length unit.')
 ap.add_argument('-e', '--epsfmt', action = 'store_true',

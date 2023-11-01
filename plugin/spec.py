@@ -10,46 +10,57 @@ from disba import PhaseDispersion
 import numpy as np
 import h5py
 import matplotlib.pyplot as plt
-import argparse, glob, os
+import argparse, json
+import glob, os, sys
+
+dparfile = 'defpars/spec.json'
+if not os.path.isfile(dparfile):
+  pyhome = os.path.split(sys.argv[0])[0]
+  dparfile = pyhome + '/../defpars/spec.json'
+with open(dparfile) as fin:
+  dpars = json.load(fin)
+
+#===============================================================================
 
 ap = argparse.ArgumentParser(description = 'to plot data or spectrum.',
   prefix_chars = '-+')
 # for basic files
-ap.add_argument('-d', '--fdata', metavar = 'dataFile', default = 'spec.dat',
+ap.add_argument('-d', '--fdata', metavar = 'dataFile', default = dpars['-d'],
   help = 'the data file. [default: %(default)s]')
 ap.add_argument('-0', '--initial', metavar = 'initModel',
-  default = 'initial.dat', help = 'the initial model. ' +
-  '[default: %(default)s]')
+  default = dpars['-0'], help = 'the initial model. [default: %(default)s]')
 ag = ap.add_mutually_exclusive_group()
-ag.add_argument('-I', '--inml', metavar = 'inputNMLFile', default = 'input.nml',
+ag.add_argument('-I', '--inml', metavar = 'inputNMLFile', default = dpars['-I'],
   help = 'the input NAMELIST file. [default: %(default)s]')
-ag.add_argument('-W', '--ifactor', metavar = 'imgFreqFactor', default = None,
-  type = float, help = 'the imaginary frequency factor. If not None, ' +
-  'read f/c sampling points from the respective input files.')
+ag.add_argument('-W', '--ifactor', metavar = 'imgFreqFactor',
+  default = dpars['-W'], type = float, help = 'the imaginary frequency ' +
+  'factor. If not None, read f/c sampling points from the respective ' +
+  'input files. [default: %(default)s]')
 ag = ap.add_mutually_exclusive_group()
-ag.add_argument('-1', '--inv', metavar = 'invdModel', default = None,
-  help = 'to plot the inversed model.')
-ag.add_argument('-R', '--outdir', metavar = 'outputDir', default = 'output/',
+ag.add_argument('-1', '--inv', metavar = 'invdModel', default = dpars['-1'],
+  help = 'to plot the inversed model. [default: %(default)s]')
+ag.add_argument('-R', '--outdir', metavar = 'outputDir', default = dpars['-R'],
   help = 'to plot all models under the inversion-output directory, ' +
   'recursively. [default: %(default)s]')
-ap.add_argument('-2', '--real', metavar = 'realModel', default = 'real.dat',
+ap.add_argument('-2', '--real', metavar = 'realModel', default = dpars['-2'],
   help = 'the real model. [default: %(default)s]')
 # for frequency and phase velocity
-ap.add_argument('-f', '--ffile', metavar = 'freqFile', default = 'f.txt',
+ap.add_argument('-f', '--ffile', metavar = 'freqFile', default = dpars['-f'],
   help = 'the frequency input file. [default: %(default)s]')
-ap.add_argument('-c', '--cfile', metavar = 'cFile', default = 'c.txt',
+ap.add_argument('-c', '--cfile', metavar = 'cFile', default = dpars['-c'],
   help = 'the phase velocity input file. [default: %(default)s]')
 ap.add_argument('-i', '--fidxargs', metavar = 'iStart[:iEnd[:iStride]]',
-  default = '0:0:1', help = 'the arguments for calculating the index of ' +
-  'frequency sampling-points in inversion.')
+  default = dpars['-i'], help = 'the arguments for calculating the index of ' +
+  'frequency sampling-points in inversion. [default: %(default)s]')
 ap.add_argument('-j', '--cidxargs', metavar = 'jStart[:jEnd[:jStride]]',
-  default = '0:0:1', help = 'the arguments for calculating the index of ' +
-  'phase velocity sampling-points in inversion.')
+  default = dpars['-j'], help = 'the arguments for calculating the index of ' +
+  'phase velocity sampling-points in inversion. [default: %(default)s]')
 ap.add_argument('-w', '--winargs', nargs = '+',
-  metavar = 'iStart[:iEnd[:iStride]],jStart[:jEnd[:jStride]]', default = None,
-  help = 'the arguments for windowing spectrogram in inversion.')
+  metavar = 'iStart[:iEnd[:iStride]],jStart[:jEnd[:jStride]]',
+  default = dpars['-w'], help = 'the arguments for windowing spectrogram ' +
+  'in inversion. [default: %(default)s]')
 ap.add_argument('-r', '--rfistep', metavar = 'rootFreqStep', type = int,
-  default = 3, help = 'index step length of frequency sampling ' +
+  default = dpars['-r'], help = 'index step length of frequency sampling ' +
   'for root searching. [default: %(default)s]')
 # for data processing
 ap.add_argument('-t', '--datatp', action = 'store_true',
@@ -60,46 +71,48 @@ ap.add_argument('-u', '--notsiu', action = 'store_true',
   help = 'NOT SI Units used in the initial model, but common units, such as ' +
   'km, km/s, g/cm^3.')
 # for supplementary options
-ap.add_argument('+f', '--fplot', metavar = 'filePlot', default = 'fplot.dat',
+ap.add_argument('+f', '--fplot', metavar = 'filePlot', default = dpars['+f'],
   help = 'the input file for file-item plotting. [default: %(default)s]')
-ap.add_argument('+F', '--Fplot', metavar = 'modelFplot', default = None,
+ap.add_argument('+F', '--Fplot', metavar = 'modelFplot', default = dpars['+F'],
   help = 'the model file for file-item plotting; if not None, ' +
-  "will re-generate the input file of '+f'.")
+  "will re-generate the input file of '+f'. [default: %(default)s]")
 ag = ap.add_mutually_exclusive_group()
 ag.add_argument('-x', '--idxlist', metavar = 'index', type = int, nargs = '+',
-  default = None, help = 'the index list for the inversed models ' +
-  'to be plotted.')
+  default = dpars['-x'], help = 'the index list for the inversed models ' +
+  'to be plotted. [default: %(default)s]')
 ag.add_argument('-X', '--idxargs', metavar = 'iStart:iEnd:iStride',
-  default = None, help = 'the arguments for calculating indexes of ' +
-  'the inversed models to be plotted.')
+  default = dpars['-X'], help = 'the arguments for calculating indexes of ' +
+  'the inversed models to be plotted. [default: %(default)s]')
 # for data selecting to plot
-ap.add_argument('+b', '--bgitem', metavar = 'itemName', default = None,
+ap.add_argument('+b', '--bgitem', metavar = 'itemName', default = dpars['+b'],
   help = 'the item for window background pcolor. [acceptable: data, init, ' +
-  'real, inv, file]')
-ap.add_argument('+c', '--fgcont', metavar = 'itemName', default = None,
+  'real, inv, file; default: %(default)s]')
+ap.add_argument('+c', '--fgcont', metavar = 'itemName', default = dpars['+c'],
   help = 'the item for window foreground contour. [acceptable: data, init, ' +
-  'real, inv, file]')
-ap.add_argument('+p', '--fgplot', metavar = 'itemName', default = None,
+  'real, inv, file; default: %(default)s]')
+ap.add_argument('+p', '--fgplot', metavar = 'itemName', default = dpars['+p'],
   help = 'the item for window foreground plot. [acceptable: data, init, ' +
-  'real, inv, file]')
+  'real, inv, file; default: %(default)s]')
 # for plotting options
 ap.add_argument('+B', '--bgmain', action = 'store_true',
   help = 'to pcolor the main background, use itemName same as bgitem.')
 ap.add_argument('-L', '--clev', metavar = 'level', type = float, nargs = '+',
-  default = [0.25, 0.75], help = 'the level for contour plotting. ' +
-  '[default: 0.25 0.75]')
-ap.add_argument('-T', '--ptitle', metavar = 'plotTitle', default = None,
-  help = 'set the title for plotting.')
+  default = dpars['-L'], help = 'the level for contour plotting. ' +
+  '[default: %g %g]' % (dpars['-L'][0], dpars['-L'][1]))
+ap.add_argument('-T', '--ptitle', metavar = 'plotTitle', default = dpars['-T'],
+  help = 'set the title for plotting. [default: %(default)s]')
 ag = ap.add_mutually_exclusive_group()
-ag.add_argument('-s', '--savepath', metavar = 'saveFigPath', default = './',
-  help = 'save figure(s) to the path. [default: %(default)s]')
+ag.add_argument('-s', '--savepath', metavar = 'saveFigPath',
+  default = dpars['-s'], help = 'save figure(s) to the path. ' +
+  '[default: %(default)s]')
 ag.add_argument('-S', '--show', action = 'store_true',
   help = 'show figure(s) immediately.')
 ap.add_argument('-O', '--outpref', metavar = 'outFigPrefix',
-  default = 'Ex4I_DataSpec', help = 'save figure as a file with ' +
+  default = dpars['-O'], help = 'save figure as a file with ' +
   'the name prefix. [default: %(default)s]')
-ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int, default = 150,
-  help = 'specify the value of dpi for saving figure. [default: %(default)s]')
+ap.add_argument('-p', '--dpi', metavar = 'dpiValue', type = int,
+  default = dpars['-p'], help = 'specify the value of dpi for saving figure. ' +
+  '[default: %(default)s]')
 ap.add_argument('-k', '--kmunit', action = 'store_true',
   help = 'use km as the length unit.')
 ap.add_argument('-e', '--epsfmt', action = 'store_true',
