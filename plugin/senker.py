@@ -141,8 +141,7 @@ if args.kerfile is None:
 
   fs = spec.paramod.f.copy()
   cs = spec.paramod.c.copy()
-  z  = spec.paramod.z.copy()
-  z[-1] = z[-2] * 2.0 - z[-3]
+  z  = spec.paramod.z[:-1].copy()
 
   f = fs[ fias[0]:fias[1]:fias[2] ]
   c = cs[ cias[0]:cias[1]:cias[2] ]
