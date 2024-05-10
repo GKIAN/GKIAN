@@ -14,7 +14,7 @@ If you used the package, please cite:
 
 ## Description
 
-The package is tailored to implement the direct image inversion of surface wave dispersion spectra. It employs the GRTC (Generalized Reflection and Transmission Coefficient) method (Chen, 1993) to calculate the theoretical dispersion spectrum of surface waves, and applies the L-BFGS-B algorithm (Zhu, 1995) to inverse the subsurface velocity structure.
+The package is tailored to implement the direct image inversion of surface wave dispersion spectra. It employs the GRTC (Generalized Reflection and Transmission Coefficient) method (Chen, 1993) to calculate the theoretical dispersion spectrum of surface waves, and applies the L-BFGS-B algorithm (Zhu, 1997) to inverse the subsurface velocity structure.
 
 ## Reference
 
