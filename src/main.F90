@@ -12,7 +12,7 @@ program main
   use grtcMod
   implicit none
 
-  character(len = LLS) :: kernelFile, dKernelFile
+  character(len = LLS) :: middleName, kernelFile, dKernelFile
   character(len = LSS) :: fmtStr
   integer :: fileID, i, j
   !$ real(kind = MK) :: tbeg, tend
@@ -23,8 +23,15 @@ program main
   call paraInitialize()
   call grtcInitialize()
 
-  write(kernelFile, '(A)') 'gPS02.' // trim(adjustl(inputFile))
-  kernelFile = kernelFile(:index(kernelFile, '.nml') - 1) // '.ker'
+  middleName = inputFile(index(inputFile, '/', .true.) + 1 &
+    & :index(inputFile, '.nml') - 1)
+  if(len_trim(middleName) == 0) then
+    call paraErrorExcept(NOFATALERR, &
+      & "Failed to automatically format outputfile name.")
+    kernelFile = 'gPS02.ker'
+  else
+    kernelFile = 'gPS02.' // trim(adjustl(middleName)) // '.ker'
+  end if
   dKernelFile = 'd' // trim(adjustl(kernelFile))
 
   !$ tbeg = omp_get_wtime()
@@ -33,6 +40,8 @@ program main
   !$ write(*, '(A, F10.6, A)') 'OpenMP elapsed time is ', tend - tbeg, ' s.'
 
   write(fmtStr, '(A, G0, A, A)') '(G0, ', cNum, '(2X, G0)', ')'
+  write(*, '(A)') '> Output kernel spectrum file: [' &
+    & // trim(adjustl(kernelFile)) // '] ...'
   open(newunit = fileID, file = kernelFile)
     write(fileID, fmtStr) 0, (c(j), j = 1, cNum)
     do i = 1, fNum
@@ -40,6 +49,8 @@ program main
     end do
   close(fileID)
   if(hasDeriv) then
+    write(*, '(A)') '> Output kernel derivative spectrum file: [' &
+      & // trim(adjustl(dKernelFile)) // '] ...'
     open(newunit = fileID, file = dKernelFile, access = 'stream')
       write(fileID) dKerMat
     close(fileID)
